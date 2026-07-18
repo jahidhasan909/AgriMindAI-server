@@ -32,11 +32,32 @@ async function run() {
     const database = client.db(process.env.MONGODB_DB)
     const userCollaction = database.collection('usercollaction')
     const users = database.collection('user')
+    const productsCollaction = database.collection('products')
 
 
     app.post('/api/usercollaction', async (req, res) => {
       const userdocs = req.body
       const result = await userCollaction.insertOne(userdocs)
+      res.json(result)
+    })
+
+    app.get('/api/own/usercollaction', async (req, res) => {
+      try {
+        const query: { email?: string } = {};
+        if (req.query.email) {
+          query.email = req.query.email as string;
+        }
+
+        const cursor = await userCollaction.findOne(query);
+        res.json(cursor);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+
+
+
+    app.post('/api/products', async (req, res) => {
+      const products = req.body
+      const result = await productsCollaction.insertOne(products)
       res.json(result)
     })
 
@@ -68,10 +89,8 @@ run().catch(console.dir);
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
-  res.send('Hello World!')
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on PORT ${port}`)
   console.log(`Example app listening on PORT ${port}`)
 })
