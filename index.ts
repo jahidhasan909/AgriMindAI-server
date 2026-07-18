@@ -72,6 +72,25 @@ async function run() {
       res.json(cursor);
     })
 
+    app.patch('/api/own/usercollaction', async (req, res) => {
+      try {
+        const query: { email?: string } = {};
+        const updateData = req.body;
+        if (req.query.email) {
+          query.email = req.query.email as string;
+        }
+        const updateDocument = { $set: { ...updateData } };
+        const cursor = await userCollaction.updateOne(query, updateDocument);
+        const result = await users.updateOne({ email: req.query.email as string }, {
+          $set: {
+            name: updateData.name,
+            image: updateData.image
+          }
+        });
+        res.json({ cursor, result });
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+
 
 
 
