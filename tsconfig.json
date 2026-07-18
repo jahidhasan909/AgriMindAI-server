@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // ── File layout ──────────────────────────────────────────────────────────
+    "rootDir": ".",
+    "outDir":  "./dist",
+
+    // ── Module resolution ─────────────────────────────────────────────────────
+    "module":           "nodenext",
+    "moduleResolution": "nodenext",
+    "target":           "esnext",
+
+    // ── Type support ──────────────────────────────────────────────────────────
+    "lib":   ["esnext"],
+    "types": ["node"],
+
+    // ── Output extras ─────────────────────────────────────────────────────────
+    "sourceMap":      true,
+    "declaration":    true,
+    "declarationMap": true,
+
+    // ── Strict type-checking ──────────────────────────────────────────────────
+    "strict":                    true,
+    "noUncheckedIndexedAccess":  true,
+    "exactOptionalPropertyTypes":true,
+    "noImplicitReturns":         true,
+    "noFallthroughCasesInSwitch":true,
+
+    // ── Module interop ────────────────────────────────────────────────────────
+    "esModuleInterop":  true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules":  true,
+    "skipLibCheck":     true,
+    "moduleDetection":  "force"
+  },
+  "include": ["index.ts", "src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
