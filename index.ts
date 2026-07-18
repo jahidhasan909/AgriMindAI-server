@@ -92,7 +92,43 @@ async function run() {
     });
 
 
+    app.patch('/api/usercollaction/makeblock', async (req, res) => {
+      try {
+        const query: { email?: string } = {};
+        if (req.query.email) {
+          query.email = req.query.email as string;
+        }
+        const updateDocument = { $set: { status: 'blocked' } };
 
+        const result = await userCollaction.updateOne(query, updateDocument);
+        res.json(result);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+
+    app.patch('/api/usercollaction/unblocked', async (req, res) => {
+      try {
+        const query: { email?: string } = {};
+        if (req.query.email) {
+          query.email = req.query.email as string;
+        }
+        const updateDocument = { $set: { status: 'active' } };
+
+        const result = await userCollaction.updateOne(query, updateDocument);
+        res.json(result);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+
+
+    app.get('/api/pegination/users', async (req, res) => {
+      try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+        const result = await userCollaction.find().skip(skip).limit(Number(limit)).toArray();
+        const totalData = await userCollaction.countDocuments();
+        const totalPage = Math.ceil(totalData / Number(limit));
+        res.json({ data: result, page: Number(page), totalPage });
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
 
 
 
