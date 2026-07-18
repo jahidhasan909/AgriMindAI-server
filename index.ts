@@ -60,6 +60,29 @@ async function run() {
       const result = await productsCollaction.insertOne(products)
       res.json(result)
     })
+    app.get('/api/products', async (req, res) => {
+      try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        const totalProducts = await productsCollaction.countDocuments();
+        const result = await productsCollaction.find()
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+
+        res.json({
+          success: true,
+          products: result,
+          totalProducts,
+          totalPages: Math.ceil(totalProducts / limit),
+          currentPage: page
+        });
+      } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
 
     app.post('/api/publicchat', async (req, res) => {
       const publicchat = req.body
