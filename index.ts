@@ -33,7 +33,7 @@ async function run() {
     const userCollaction = database.collection('usercollaction')
     const users = database.collection('user')
     const productsCollaction = database.collection('products')
-
+    const publicchatCollaction = database.collection('publicchat')
 
     app.post('/api/usercollaction', async (req, res) => {
       const userdocs = req.body
@@ -59,6 +59,17 @@ async function run() {
       const products = req.body
       const result = await productsCollaction.insertOne(products)
       res.json(result)
+    })
+
+    app.post('/api/publicchat', async (req, res) => {
+      const publicchat = req.body
+      const result = await publicchatCollaction.insertOne(publicchat)
+      res.json(result)
+    })
+
+    app.get('/api/publicchat', async (req, res) => {
+      const cursor = await publicchatCollaction.find().toArray();
+      res.json(cursor);
     })
 
 
