@@ -3,14 +3,20 @@ import type { Express } from "express";
 import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import Stripe from "stripe";
 
 dotenv.config();
+
+
 
 const app: Express = express();
 const port: number = Number(process.env.PORT) || 8000;
 app.use(cors());
-app.use(express.json())
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 const uri = process.env.MONGODB_URI
 
@@ -34,6 +40,48 @@ async function run() {
     const users = database.collection('user')
     const productsCollaction = database.collection('products')
     const publicchatCollaction = database.collection('publicchat')
+    const start = database.collection('start')
+    const paymentsCollaction = database.collection('payments')
+
+    app.post('/api/store-payment', async (req, res) => {
+      try {
+        const { productId, productName, buyerName, buyerEmail, transactionId, amount } = req.body;
+
+        if (!productId || !buyerEmail) {
+          return res.status(400).json({ success: false, error: 'Missing parameters' });
+        }
+
+        const paymentInfo = {
+          productId,
+          productName,
+          buyerName,
+          buyerEmail,
+          transactionId,
+          amount,
+          status: "success",
+          paidAt: new Date().toISOString()
+        };
+
+
+        await paymentsCollaction.insertOne(paymentInfo);
+
+        await productsCollaction.updateOne(
+          { _id: new ObjectId(productId) },
+          {
+            $set: {
+              availability: 'Unavailable',
+              buyerEmail: buyerEmail,
+              buyerName: buyerName
+            }
+          }
+        );
+
+        res.json({ success: true, message: "Successfully sync database from Next.js Server Component." });
+      } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
 
     app.post('/api/usercollaction', async (req, res) => {
       const userdocs = req.body
@@ -152,6 +200,65 @@ async function run() {
         res.json({ data: result, page: Number(page), totalPage });
       } catch (err: any) { res.status(500).json({ error: err.message }); }
     });
+
+    app.post('/api/start', async (req, res) => {
+      try {
+        const info = req.body;
+
+
+        const insertResult = await start.insertOne(info);
+
+        const totalCount = await start.countDocuments({
+          productId: info.productId,
+          actionType: "star_rating"
+        });
+
+        res.json({
+          success: true,
+          result: insertResult,
+          count: totalCount
+        });
+      } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+
+
+    app.get('/api/start/count/:productId', async (req, res) => {
+      try {
+        const productId = req.params.productId;
+        const totalCount = await start.countDocuments({
+          productId: productId,
+          actionType: "star_rating"
+        });
+        res.json({ count: totalCount });
+      } catch (error: any) {
+        res.status(500).json({ success: false, count: 0 });
+      }
+    });
+
+    app.get('/api/products/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await productsCollaction.findOne(query);
+        res.json(result);
+      } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+    })
+
+
+
+    app.patch('/api/products/:id', async (req, res) => {
+
+      try {
+        const id = req.params.id;
+        const updateData = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDocument = { $set: { ...updateData } };
+        const result = await productsCollaction.updateOne(query, updateDocument);
+        res.json(result);
+      } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+    })
 
 
 
