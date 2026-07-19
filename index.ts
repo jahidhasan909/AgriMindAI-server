@@ -44,6 +44,17 @@ async function run() {
     const paymentsCollaction = database.collection('payments');
 
 
+
+
+    app.get('/api/adminAcess/products',async(req,res)=>{
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+        const result = await productsCollaction.find().skip(skip).limit(Number(limit)).toArray();
+        const totalData = await productsCollaction.countDocuments();
+        const totalPage = Math.ceil(totalData / Number(limit));
+        res.json({ data: result, page: Number(page), totalPage });
+      })
+
     app.get('/api/payments/get-all-sales', async (req, res) => {
       try {
         const result = await paymentsCollaction.find().toArray();
@@ -60,6 +71,16 @@ async function run() {
         }
         const result = await paymentsCollaction.find(query).skip(skip).limit(Number(limit)).toArray();
         const totalData = await paymentsCollaction.countDocuments(query);
+        const totalPage = Math.ceil(totalData / Number(limit));
+        res.json({ data: result, page: Number(page), totalPage });
+      } catch (err: any) { res.status(500).json({ error: err.message }); }  
+    });
+    app.get('/api/admin/payments/get-all-order', async (req, res) => {
+      try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+        const result = await paymentsCollaction.find().skip(skip).limit(Number(limit)).toArray();
+        const totalData = await paymentsCollaction.countDocuments();
         const totalPage = Math.ceil(totalData / Number(limit));
         res.json({ data: result, page: Number(page), totalPage });
       } catch (err: any) { res.status(500).json({ error: err.message }); }  
