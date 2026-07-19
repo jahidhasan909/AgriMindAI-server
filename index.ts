@@ -44,6 +44,29 @@ async function run() {
     const paymentsCollaction = database.collection('payments');
 
 
+    app.get('/api/payments/get-all-sales', async (req, res) => {
+      try {
+        const result = await paymentsCollaction.find().toArray();
+        res.json(result);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }  
+    });
+    app.get('/api/buyer/payments/get-all-my-payments', async (req, res) => {
+      try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+        const query: { buyerEmail?: string } = {};
+          if (req.query.buyerEmail) {
+          query.buyerEmail = req.query.buyerEmail as string;
+        }
+        const result = await paymentsCollaction.find(query).skip(skip).limit(Number(limit)).toArray();
+        const totalData = await paymentsCollaction.countDocuments(query);
+        const totalPage = Math.ceil(totalData / Number(limit));
+        res.json({ data: result, page: Number(page), totalPage });
+      } catch (err: any) { res.status(500).json({ error: err.message }); }  
+    });
+
+
+
 
     app.get('/api/farmer/products/pegination', async (req, res) => {
     try {
@@ -711,6 +734,7 @@ async function run() {
         res.json({ data: result, page: Number(page), totalPage });
       } catch (err: any) { res.status(500).json({ error: err.message }); }
     });
+   
 
     app.post('/api/start', async (req, res) => {
       try {
