@@ -44,6 +44,29 @@ async function run() {
     const paymentsCollaction = database.collection('payments');
 
 
+
+    app.get('/api/farmer/products/pegination', async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+        const query: { farmerEmail?: string } = {};
+
+        if (req.query.farmerEmail) {
+          query.farmerEmail = req.query.farmerEmail as string;
+        }
+
+        const result = await productsCollaction.find(query).skip(skip).limit(Number(limit)).toArray();
+        const totalData = await productsCollaction.countDocuments(query);
+        const totalPage = Math.ceil(totalData / Number(limit));
+        res.json({ data: result, page: Number(page), totalPage });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }  
+    });
+
+
+
+
+
+
     app.post('/api/ai/generate-product', async (req, res) => {
       const { productName } = req.body;
 
@@ -146,18 +169,13 @@ async function run() {
       }
     });
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // POST /api/ai/doctor-chat  —  Role-Aware Multi-Agent AI System (v2)
-    // Body: { role: 'farmer' | 'buyer' | 'admin', message: string }
-    // Supports: Pure Bangla · Standard English · Avro/Banglish
-    // ─────────────────────────────────────────────────────────────────────────
+  
     app.post('/api/ai/doctor-chat', async (req, res) => {
       const ALLOWED_ROLES = ['farmer', 'buyer', 'admin'] as const;
       type AllowedRole = typeof ALLOWED_ROLES[number];
 
       const { role, message } = req.body as { role: string; message: string };
 
-      // ── 1. Strict Input Validation ──────────────────────────────────────────
       if (!role || !message) {
         return res.status(400).json({
           success: false,
@@ -180,11 +198,11 @@ async function run() {
       const validRole = role as AllowedRole;
       const cleanMessage = message.trim();
 
-      // ── 2. Keyword-Based Bangla Fallback v2 (Avro + detailed responses) ──────
+  
       const buildChatFallback = (r: AllowedRole, msg: string): string => {
         const m = msg.toLowerCase();
 
-        // ── FARMER fallback ──
+        
         if (r === 'farmer') {
           if (/(রোগ|disease|rog|ব্লাস্ট|blast|পাতা|pata|leaf|blight|ছত্রাক|chhatrak|fungus|fungal|shukiye|শুকিয়ে)/.test(m))
             return [
@@ -263,7 +281,7 @@ async function run() {
           ].join('\n');
         }
 
-        // ── BUYER fallback ──
+      
         if (r === 'buyer') {
           if (/(ভিটামিন|vitamin|পুষ্টি|pusti|nutrition|benefit|উপকার|upokar|স্বাস্থ্য|shasthya)/.test(m))
             return [
@@ -324,7 +342,7 @@ async function run() {
           ].join('\n');
         }
 
-        // ── ADMIN fallback (now in Bangla/Banglish) ──
+        
         if (r === 'admin') {
           if (/(fraud|jaliati|জালিয়াত|fake|seller|seller re|bikreta|বিক্রেতা|suspicious|doubtful|report)/.test(m))
             return [
@@ -400,7 +418,7 @@ async function run() {
         return 'সার্ভার সাময়িক ব্যস্ত। অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন।';
       };
 
-      // ── 3. Persona Configuration v2 (Trilingual · Banglish · Comprehensive) ──
+      
       const PERSONA_CONFIG: Record<AllowedRole, { temperature: number; max_tokens: number; systemPrompt: string }> = {
 
         farmer: {
@@ -484,7 +502,6 @@ async function run() {
         },
       };
 
-      // ── 4. API-Key Guard → Immediate Fallback ───────────────────────────────
       if (!process.env.GROQ_API_KEY) {
         console.warn('⚠️  GROQ_API_KEY is missing — doctor-chat using keyword fallback.');
         return res.json({
@@ -495,7 +512,7 @@ async function run() {
         });
       }
 
-      // ── 5. Main Try/Catch with Groq ─────────────────────────────────────────
+      
       try {
         const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
         const persona = PERSONA_CONFIG[validRole];
@@ -743,6 +760,24 @@ async function run() {
         const query = { _id: new ObjectId(id) };
         const updateDocument = { $set: { ...updateData } };
         const result = await productsCollaction.updateOne(query, updateDocument);
+        res.json(result);
+      } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+    });
+
+    app.delete('/api/farmer/products/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await productsCollaction.deleteOne(query);
+        res.json(result);
+      } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+    });
+
+    app.patch('/api/farmer/products/confirm/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await productsCollaction.updateOne(query, { $set: { availability: 'Unavailable' } });
         res.json(result);
       } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
     });
