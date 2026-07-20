@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Groq } from 'groq-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,7 @@ import express from "express";
 import type { Express } from "express";
 import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
 import cors from "cors";
-import Groq from "groq-sdk";
+
 
 const app: Express = express();
 const port: number = Number(process.env.PORT) || 8000;
