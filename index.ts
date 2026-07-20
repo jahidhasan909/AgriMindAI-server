@@ -43,8 +43,7 @@ async function run() {
     const start = database.collection('start');
     const paymentsCollaction = database.collection('payments');
 
-
-
+    
 
     app.get('/api/adminAcess/products',async(req,res)=>{
         const { page = 1, limit = 10 } = req.query;
@@ -85,8 +84,6 @@ async function run() {
         res.json({ data: result, page: Number(page), totalPage });
       } catch (err: any) { res.status(500).json({ error: err.message }); }  
     });
-
-
 
 
     app.get('/api/farmer/products/pegination', async (req, res) => {
@@ -655,6 +652,12 @@ async function run() {
         }
 
         const cursor = await userCollaction.findOne(query);
+        res.json(cursor);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+    app.get('/api/usercollaction', async (req, res) => {
+      try {
+        const cursor = await userCollaction.find().toArray()
         res.json(cursor);
       } catch (err: any) { res.status(500).json({ error: err.message }); }
     });
