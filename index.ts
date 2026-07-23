@@ -30,6 +30,14 @@ const verifyJWT = (req: any, res: any, next: any) => {
   }
 
   const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized',
+      message: 'Access token missing or malformed. Please provide a Bearer token in Authorization header.',
+    });
+  }
+
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
@@ -283,16 +291,18 @@ async function run() {
 
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
-        try {
-          const decoded: any = jwt.verify(token, JWT_SECRET);
-          activeRole = decoded.role || activeRole;
-          userEmail = decoded.email || userEmail;
-        } catch (err: any) {
-          return res.status(401).json({
-            success: false,
-            error: 'Unauthorized',
-            message: 'Your JWT token has expired or is invalid. Please log in again to refresh your token.',
-          });
+        if (token) {
+          try {
+            const decoded: any = jwt.verify(token, JWT_SECRET);
+            activeRole = decoded.role || activeRole;
+            userEmail = decoded.email || userEmail;
+          } catch (err: any) {
+            return res.status(401).json({
+              success: false,
+              error: 'Unauthorized',
+              message: 'Your JWT token has expired or is invalid. Please log in again to refresh your token.',
+            });
+          }
         }
       }
 
