@@ -12,7 +12,7 @@ import express from "express";
 import type { Express } from "express";
 import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
 
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
 import cors from "cors";
 import jwt from "jsonwebtoken";
 
